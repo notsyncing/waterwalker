@@ -4,8 +4,8 @@ plugins {
     id "com.jfrog.bintray" version "1.7.3"
 }
 
-def ver = "0.1.0"
-def grp = "io.github.notsyncing"
+def ver = "0.1.1"
+def grp = "io.github.notsyncing.waterwalker"
 
 ext.ver = ver
 ext.grp = grp
