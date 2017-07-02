@@ -32,6 +32,12 @@ public class WaterWalkerServer {
 
     private boolean stop = false;
 
+    /**
+     * Create a TCP server
+     * @param listenAddress address to listen to, e.g. "0.0.0.0" for all hosts, or "localhost"
+     * @param listenPort port to listen to, e.g. 8080
+     * @throws IOException when something goes wrong
+     */
     public WaterWalkerServer(String listenAddress, int listenPort) throws IOException {
         this.listenAddress = listenAddress;
         this.listenPort = listenPort;
@@ -44,14 +50,27 @@ public class WaterWalkerServer {
         selectorThread.start();
     }
 
+    /**
+     * Get current listening port
+     * @return current listening port
+     */
     public int getListenPort() {
         return listenPort;
     }
 
+    /**
+     * Get current listening address
+     * @return current listening address
+     */
     public String getListenAddress() {
         return listenAddress;
     }
 
+    /**
+     * Stop the server
+     * @throws InterruptedException
+     * @throws IOException
+     */
     public void stop() throws InterruptedException, IOException {
         stop = true;
         selector.wakeup();
@@ -182,14 +201,31 @@ public class WaterWalkerServer {
         }
     }
 
+    /**
+     * When some data was read into buffer, this handler will be called, you can process the read data
+     * @param callback a function containing current socket and read data
+     */
     public void setDefaultReadCallback(BiConsumer<SocketChannel, ByteBuffer> callback) {
         this.defaultChannelReadCallback = callback;
     }
 
+    /**
+     * When a new connection was established, this handler will be called
+     * @param callback a function containing current socket
+     */
     public void setConnectedCallback(Consumer<SocketChannel> callback) {
         this.channelConnectedCallback = callback;
     }
 
+    /**
+     * Read all data until a condition is met, or the max length is reached
+     * @param channel current socket channel
+     * @param currentBuffer current already read data buffer
+     * @param currentBufferSkip if you has already read some data from the buffer, fill with the length you have read
+     * @param maxLength max data bytes to read regardless the conditions
+     * @param condition a predicate with current data block as parameter, indicating if we should end reading
+     * @param doneCallback a function called when all data was read or an exception was thrown
+     */
     public void readUntil(SocketChannel channel, ByteBuffer currentBuffer, int currentBufferSkip, int maxLength,
                           Predicate<ByteBuffer> condition, BiConsumer<ByteBuffer, Exception> doneCallback) {
         ChannelReadTask task = channelReadTasks.get(channel);
@@ -229,6 +265,15 @@ public class WaterWalkerServer {
         }
     }
 
+    /**
+     * Read all data until a condition is met, or the max length is reached, CompletableFuture version
+     * @param channel current socket channel
+     * @param currentBuffer current already read data buffer
+     * @param currentBufferSkip if you has already read some data from the buffer, fill with the length you have read
+     * @param maxLength max data bytes to read regardless the conditions
+     * @param condition a predicate with current data block as parameter, indicating if we should end reading
+     * @return a CompletableFuture indicating the end of reading
+     */
     public CompletableFuture<ByteBuffer> readUntil(SocketChannel channel, ByteBuffer currentBuffer,
                                                    int currentBufferSkip, int maxLength,
                                                    Predicate<ByteBuffer> condition) {
@@ -245,16 +290,42 @@ public class WaterWalkerServer {
         return future;
     }
 
+    /**
+     * Read all data until the connection is closed by peer, or the max length is reached
+     * @param channel current socket channel
+     * @param currentBuffer current already read data buffer
+     * @param currentBufferSkip if you has already read some data from the buffer, fill with the length you have read
+     * @param maxLength max data bytes to read regardless the conditions
+     * @param doneCallback a function called when all data was read or an exception was thrown
+     */
     public void readUntilClose(SocketChannel channel, ByteBuffer currentBuffer, int currentBufferSkip, int maxLength,
                                BiConsumer<ByteBuffer, Exception> doneCallback) {
         readUntil(channel, currentBuffer, currentBufferSkip, maxLength, Objects::isNull, doneCallback);
     }
 
+    /**
+     * Read all data until the connection is closed by peer, or the max length is reached, CompletableFuture version
+     * @param channel current socket channel
+     * @param currentBuffer current already read data buffer
+     * @param currentBufferSkip if you has already read some data from the buffer, fill with the length you have read
+     * @param maxLength max data bytes to read regardless the conditions
+     * @return a CompletableFuture indicating all data was read
+     */
     public CompletableFuture<ByteBuffer> readUntilClose(SocketChannel channel, ByteBuffer currentBuffer,
                                                         int currentBufferSkip, int maxLength) {
         return readUntil(channel, currentBuffer, currentBufferSkip, maxLength, Objects::isNull);
     }
 
+    /**
+     * Read all data into an OutputStream until a condition is met, or the max length is reached
+     * @param channel current socket channel
+     * @param currentBuffer current already read data buffer
+     * @param currentBufferSkip if you has already read some data from the buffer, fill with the length you have read
+     * @param outputStream the OutputStream to write
+     * @param maxLength max data bytes to read regardless the conditions
+     * @param condition a predicate with current data block as parameter, indicating if we should end reading
+     * @param doneCallback a function called when all data was read or an exception was thrown
+     */
     public void pumpToStreamUntil(SocketChannel channel, ByteBuffer currentBuffer, int currentBufferSkip,
                                   OutputStream outputStream, int maxLength, Predicate<ByteBuffer> condition,
                                   Consumer<Exception> doneCallback) {
@@ -295,6 +366,16 @@ public class WaterWalkerServer {
         }
     }
 
+    /**
+     * Read all data into an OutputStream until a condition is met, or the max length is reached, CompletableFuture version
+     * @param channel current socket channel
+     * @param currentBuffer current already read data buffer
+     * @param currentBufferSkip if you has already read some data from the buffer, fill with the length you have read
+     * @param outputStream the OutputStream to write
+     * @param maxLength max data bytes to read regardless the conditions
+     * @param condition a predicate with current data block as parameter, indicating if we should end reading
+     * @return a CompletableFuture indicating all data was read
+     */
     public CompletableFuture<Void> pumpToStreamUntil(SocketChannel channel, ByteBuffer currentBuffer,
                                                      int currentBufferSkip, OutputStream outputStream,
                                                      int maxLength, Predicate<ByteBuffer> condition) {
@@ -311,18 +392,44 @@ public class WaterWalkerServer {
         return future;
     }
 
+    /**
+     * Read all data into an OutputStream until the connection is closed by peer, or the max length is reached
+     * @param channel current socket channel
+     * @param currentBuffer current already read data buffer
+     * @param currentBufferSkip if you has already read some data from the buffer, fill with the length you have read
+     * @param outputStream the OutputStream to write
+     * @param maxLength max data bytes to read regardless the conditions
+     * @param doneCallback a function called when all data was read or an exception was thrown
+     */
     public void pumpToStreamUntilClose(SocketChannel channel, ByteBuffer currentBuffer, int currentBufferSkip,
                                        OutputStream outputStream, int maxLength, Consumer<Exception> doneCallback) {
         pumpToStreamUntil(channel, currentBuffer, currentBufferSkip, outputStream, maxLength, Objects::isNull,
                 doneCallback);
     }
 
+    /**
+     * Read all data into an OutputStream until the connection is closed by peer, or the max length is reached, CompletableFuture version
+     * @param channel current socket channel
+     * @param currentBuffer current already read data buffer
+     * @param currentBufferSkip if you has already read some data from the buffer, fill with the length you have read
+     * @param outputStream the OutputStream to write
+     * @param maxLength max data bytes to read regardless the conditions
+     * @return a CompletableFuture indicating all data was read
+     */
     public CompletableFuture<Void> pumpToStreamUntilClose(SocketChannel channel, ByteBuffer currentBuffer,
                                                           int currentBufferSkip, OutputStream outputStream,
                                                           int maxLength) {
         return pumpToStreamUntil(channel, currentBuffer, currentBufferSkip, outputStream, maxLength, Objects::isNull);
     }
 
+    /**
+     * Write data to a connection
+     * @param channel the connection socket channel to write to
+     * @param buf the data to write
+     * @param length max byte count to write
+     * @param doneCallback a function called when the writing is done
+     * @throws ClosedChannelException when the connection has closed
+     */
     public void write(SocketChannel channel, ByteBuffer buf, int length,
                       Consumer<Exception> doneCallback) throws ClosedChannelException {
         ChannelWriteTask task = new ChannelWriteTask();
@@ -343,6 +450,14 @@ public class WaterWalkerServer {
         selector.wakeup();
     }
 
+    /**
+     * Write data to a connection, CompletableFuture version
+     * @param channel the connection socket channel to write to
+     * @param buf the data to write
+     * @param length max byte count to write
+     * @return a CompletableFuture indicating the writing is done
+     * @throws ClosedChannelException when the connection has closed
+     */
     public CompletableFuture<Void> write(SocketChannel channel, ByteBuffer buf,
                                          int length) throws ClosedChannelException {
         CompletableFuture<Void> future = new CompletableFuture<>();
@@ -358,6 +473,13 @@ public class WaterWalkerServer {
         return future;
     }
 
+    /**
+     * Write data to a connection, CompletableFuture version
+     * @param channel the connection socket channel to write to
+     * @param buf the data to write
+     * @return a CompletableFuture indicating the writing is done
+     * @throws ClosedChannelException when the connection has closed
+     */
     public CompletableFuture<Void> write(SocketChannel channel, ByteBuffer buf) throws ClosedChannelException {
         return write(channel, buf, buf.capacity());
     }
@@ -384,12 +506,26 @@ public class WaterWalkerServer {
         });
     }
 
+    /**
+     * Write all data from an InputStream to a connection
+     * @param channel the connection socket channel to write to
+     * @param inputStream the InputStream to read from
+     * @param doneCallback a function called when the writing is done
+     * @throws ClosedChannelException when the connection has closed
+     */
     public void pumpFromStream(SocketChannel channel, InputStream inputStream,
                                Consumer<Exception> doneCallback) throws IOException {
         byte[] buf = new byte[BUFFER_SIZE];
         writeStream(channel, inputStream, buf, doneCallback);
     }
 
+    /**
+     * Write all data from an InputStream to a connection, CompletableFuture version
+     * @param channel the connection socket channel to write to
+     * @param inputStream the InputStream to read from
+     * @return a CompletableFuture indicating the writing is done
+     * @throws ClosedChannelException when the connection has closed
+     */
     public CompletableFuture<Void> pumpFromStream(SocketChannel channel, InputStream inputStream) throws IOException {
         CompletableFuture<Void> future = new CompletableFuture<>();
 

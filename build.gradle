@@ -72,7 +72,7 @@ bintray {
     pkg {
         repo = 'maven'
         name = 'waterwalker'
-        licenses = [ 'GPL-3.0' ]
+        licenses = [ 'Apache-2.0' ]
         vcsUrl = 'https://github.com/notsyncing/waterwalker.git'
 
         version {
