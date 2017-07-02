@@ -1,6 +1,6 @@
 # WaterWalker
 
-Lightweight single-threaded asynchronize TCP server using Java NIO, only a ~9KB jar with no dependencies!
+Lightweight single-threaded asynchronous TCP server using Java NIO, only a ~9KB jar with no dependencies!
  
 ## Motivation
 
